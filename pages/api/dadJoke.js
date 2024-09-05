@@ -51,7 +51,7 @@ export default async function handler(req) {
           throw new Error(`Failed to generate image: ${imageResponse.statusText}`);
         }
 
-        const shareText = encodeURIComponent("Grab a laugh with this Dad joke!\n\nFrame by @aaronv.eth");
+        const shareText = encodeURIComponent("Grab a laugh with these Dad jokes!\n\nFrame by @aaronv.eth");
         const shareUrl = encodeURIComponent("https://dad-jokes-vert.vercel.app");
         const shareLink = `https://warpcast.com/~/compose?text=${shareText}&embeds[]=${shareUrl}`;
 
