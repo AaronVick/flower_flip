@@ -4,38 +4,43 @@ export const config = {
   runtime: 'edge',
 };
 
-const FACT_API = 'https://uselessfacts.jsph.pl/random.json?language=en';
-const OG_IMAGE_API = `https://funfacts-xi.vercel.app/api/generateImage`;
+const JOKE_API = 'https://icanhazdadjoke.com/';
+const OG_IMAGE_API = `https://dad-jokes-vert.vercel.app/api/generateImage`;
 
-async function fetchRandomFact() {
+async function fetchRandomJoke() {
   try {
-    const response = await axios.get(FACT_API);
+    const response = await axios.get(JOKE_API, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Dad Jokes Farcaster Frame (https://github.com/yourusername/dad-jokes-frame)'
+      }
+    });
     if (response.status === 200) {
-      return response.data.text;
+      return response.data.joke;
     } else {
-      throw new Error('Failed to fetch fact');
+      throw new Error('Failed to fetch joke');
     }
   } catch (error) {
-    console.error('Error fetching random fact:', error);
+    console.error('Error fetching random joke:', error);
     return null;
   }
 }
 
 export default async function handler(req) {
-  console.log('Received request to /api/findFact');
+  console.log('Received request to /api/dadJoke');
   console.log('Request method:', req.method);
 
   if (req.method === 'POST') {
     try {
-      console.log('Attempting to fetch random fact...');
-      const fact = await fetchRandomFact();
+      console.log('Attempting to fetch random joke...');
+      const joke = await fetchRandomJoke();
       
-      if (fact) {
-        console.log('Successfully fetched a random fact:', fact);
+      if (joke) {
+        console.log('Successfully fetched a random joke:', joke);
         
         // Generate OG image URL
         const ogImageUrl = `${OG_IMAGE_API}?` + new URLSearchParams({
-          text: fact
+          text: joke
         }).toString();
         
         console.log('Generated OG Image URL:', ogImageUrl);
@@ -46,8 +51,8 @@ export default async function handler(req) {
           throw new Error(`Failed to generate image: ${imageResponse.statusText}`);
         }
 
-        const shareText = encodeURIComponent("Take a moment from the grind and read some fun facts.\n\nFrame by @aaronv.eth");
-        const shareUrl = encodeURIComponent("https://funfacts-xi.vercel.app/");
+        const shareText = encodeURIComponent("Grab a laugh with this Dad joke!\n\nFrame by @aaronv.eth");
+        const shareUrl = encodeURIComponent("https://dad-jokes-vert.vercel.app");
         const shareLink = `https://warpcast.com/~/compose?text=${shareText}&embeds[]=${shareUrl}`;
 
         return new Response(
@@ -55,18 +60,18 @@ export default async function handler(req) {
           <!DOCTYPE html>
           <html>
             <head>
-              <title>Fun Fact</title>
+              <title>Dad Joke</title>
               <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${ogImageUrl}" />
-              <meta property="fc:frame:button:1" content="Another Fact" />
-              <meta property="fc:frame:post_url" content="https://funfacts-xi.vercel.app/api/findFact" />
+              <meta property="fc:frame:button:1" content="Another Joke" />
+              <meta property="fc:frame:post_url" content="https://dad-jokes-vert.vercel.app/api/dadJoke" />
               <meta property="fc:frame:button:2" content="Share" />
               <meta property="fc:frame:button:2:action" content="link" />
               <meta property="fc:frame:button:2:target" content="${shareLink}" />
             </head>
             <body>
-              <h1>Fun Fact</h1>
-              <p>${fact}</p>
+              <h1>Dad Joke</h1>
+              <p>${joke}</p>
             </body>
           </html>
         `,
@@ -78,10 +83,10 @@ export default async function handler(req) {
           }
         );
       } else {
-        throw new Error('Failed to fetch a random fact');
+        throw new Error('Failed to fetch a random joke');
       }
     } catch (error) {
-      console.error('Error in findFact handler:', error);
+      console.error('Error in dadJoke handler:', error);
       return new Response(
         `
         <!DOCTYPE html>
@@ -89,9 +94,9 @@ export default async function handler(req) {
           <head>
             <title>Error</title>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="https://funfacts-xi.vercel.app/error.png" />
+            <meta property="fc:frame:image" content="https://dad-jokes-vert.vercel.app/error.png" />
             <meta property="fc:frame:button:1" content="Try Again" />
-            <meta property="fc:frame:post_url" content="https://funfacts-xi.vercel.app/api/findFact" />
+            <meta property="fc:frame:post_url" content="https://dad-jokes-vert.vercel.app/api/dadJoke" />
           </head>
           <body>
             <h1>Error</h1>
@@ -115,9 +120,9 @@ export default async function handler(req) {
         <head>
           <title>Method Not Allowed</title>
           <meta property="fc:frame" content="vNext" />
-          <meta property="fc:frame:image" content="https://funfacts-xi.vercel.app/error.png" />
+          <meta property="fc:frame:image" content="https://dad-jokes-vert.vercel.app/error.png" />
           <meta property="fc:frame:button:1" content="Go Back" />
-          <meta property="fc:frame:post_url" content="https://funfacts-xi.vercel.app/api/findFact" />
+          <meta property="fc:frame:post_url" content="https://dad-jokes-vert.vercel.app/api/dadJoke" />
         </head>
         <body>
           <h1>Method Not Allowed</h1>
