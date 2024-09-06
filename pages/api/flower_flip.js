@@ -7,10 +7,11 @@ export const config = {
 const PIXABAY_API = `https://pixabay.com/api/?key=${process.env.API_KEY}&q=flowers&image_type=photo`;
 const OG_IMAGE_API = `https://flower-flip.vercel.app/api/generateImage`;
 
-async function fetchFlowerImages(page = 1) {
+async function fetchFlowerImages() {
   try {
-    console.log(`Fetching images for page: ${page}`);
-    const response = await axios.get(`${PIXABAY_API}&page=${page}`);
+    // Fetch a large set of images (e.g., 50) to randomize from
+    console.log(`Fetching random set of images`);
+    const response = await axios.get(`${PIXABAY_API}&per_page=50`);
     if (response.status === 200) {
       return response.data.hits; // Returns array of image objects
     } else {
@@ -36,23 +37,19 @@ async function generateErrorImage(text) {
 }
 
 export default async function handler(req) {
-  const { searchParams } = new URL(req.url);
-  const page = searchParams.get('page') || 1;
-
-  // Logging the request
-  console.log(`Received request for page: ${page}`);
-  
   // Use the environment variable for the base URL
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.host}`;
   console.log(`Base URL resolved to: ${baseUrl}`);
 
   if (req.method === 'POST') {
     try {
-      const images = await fetchFlowerImages(page);
+      // Fetch images and pick a random one
+      const images = await fetchFlowerImages();
 
       if (images && images.length > 0) {
-        const imageUrl = images[0].webformatURL;  // Get first image
-        console.log(`Image URL: ${imageUrl}`);
+        const randomIndex = Math.floor(Math.random() * images.length);
+        const imageUrl = images[randomIndex].webformatURL;  // Pick a random image
+        console.log(`Random image URL: ${imageUrl}`);
 
         // Share URL
         const shareText = encodeURIComponent("Check out this beautiful flower image!");
@@ -67,9 +64,11 @@ export default async function handler(req) {
               <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${imageUrl}" />
               <meta property="fc:frame:button:1" content="Next" />
-              <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage?page=${parseInt(page) + 1}" />
+              <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage" />
+              <meta property="fc:frame:button:1:method" content="POST" />
               <meta property="fc:frame:button:2" content="Previous" />
-              <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flowerImage?page=${Math.max(1, parseInt(page) - 1)}" />
+              <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flowerImage" />
+              <meta property="fc:frame:button:2:method" content="POST" />
             </head>
             <body>
               <h1>Flower Image</h1>
@@ -104,6 +103,7 @@ export default async function handler(req) {
             <meta property="fc:frame:image" content="${errorImageUrl}" />
             <meta property="fc:frame:button:1" content="Try Again" />
             <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage" />
+            <meta property="fc:frame:button:1:method" content="POST" />
           </head>
           <body>
             <h1>Error</h1>
@@ -121,6 +121,7 @@ export default async function handler(req) {
       );
     }
   } else {
+    console.error('Method Not Allowed: ', req.method);
     return new Response('Method Not Allowed', { status: 405 });
   }
 }
