@@ -9,6 +9,7 @@ const OG_IMAGE_API = `https://flower-flip.vercel.app/api/generateImage`;
 
 async function fetchFlowerImages(page = 1) {
   try {
+    console.log(`Fetching images for page: ${page}`);
     const response = await axios.get(`${PIXABAY_API}&page=${page}`);
     if (response.status === 200) {
       return response.data.hits; // Returns array of image objects
@@ -22,11 +23,11 @@ async function fetchFlowerImages(page = 1) {
 }
 
 async function generateErrorImage(text) {
+  console.log(`Generating error image with text: ${text}`);
   const ogImageUrl = `${OG_IMAGE_API}?` + new URLSearchParams({
     text: text
   }).toString();
 
-  // Verify if the image can be generated
   const imageResponse = await fetch(ogImageUrl);
   if (!imageResponse.ok) {
     throw new Error(`Failed to generate error image: ${imageResponse.statusText}`);
@@ -38,8 +39,12 @@ export default async function handler(req) {
   const { searchParams } = new URL(req.url);
   const page = searchParams.get('page') || 1;
 
-  // Base URL dynamically created from request headers
-  const baseUrl = `https://${req.headers.host}`;
+  // Logging the request
+  console.log(`Received request for page: ${page}`);
+  
+  // Use the environment variable for the base URL
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.host}`;
+  console.log(`Base URL resolved to: ${baseUrl}`);
 
   if (req.method === 'POST') {
     try {
@@ -47,6 +52,7 @@ export default async function handler(req) {
 
       if (images && images.length > 0) {
         const imageUrl = images[0].webformatURL;  // Get first image
+        console.log(`Image URL: ${imageUrl}`);
 
         // Share URL
         const shareText = encodeURIComponent("Check out this beautiful flower image!");
@@ -86,6 +92,7 @@ export default async function handler(req) {
 
       // Generate a fallback error image
       const errorImageUrl = await generateErrorImage("Error: No images available.");
+      console.log(`Generated error image URL: ${errorImageUrl}`);
 
       return new Response(
         `
