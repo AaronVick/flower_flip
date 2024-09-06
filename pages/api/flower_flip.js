@@ -5,6 +5,7 @@ export const config = {
 async function fetchFlowerArray() {
   // Fetch the flower array from the environment variable (assumed to be a comma-separated list of URLs)
   const flowerArray = process.env.flower_array ? process.env.flower_array.split(',') : [];
+  console.log(`flower_array contents: ${flowerArray}`);
   return flowerArray;
 }
 
@@ -34,9 +35,10 @@ export default async function handler(req) {
       let currentIndex = parseInt(searchParams.get('index')) || 0;
       const direction = searchParams.get('direction') || 'next'; // next or previous
 
-      // Fetch the array of flower images
+      // Fetch the array of flower images from the environment variable
       const flowerArray = await fetchFlowerArray();
       if (flowerArray.length === 0) {
+        console.log('No images found in flower_array.');
         throw new Error('No images found in flower array');
       }
 
