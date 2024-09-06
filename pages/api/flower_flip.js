@@ -7,9 +7,9 @@ async function fetchFlowerArray() {
   const envFlowerArray = process.env.flower_array || '';
   console.log(`Raw flower_array from env: ${envFlowerArray}`);
 
-  // Fallback if the environment variable is empty or null
+  // Use fallback if environment variable is empty
   const flowerArray = envFlowerArray.length ? envFlowerArray.split(',') : [
-    'https://example.com/image1.jpg',  // Example image URLs
+    'https://example.com/image1.jpg',  // Example image URLs for testing
     'https://example.com/image2.jpg',
     'https://example.com/image3.jpg'
   ];
@@ -63,6 +63,9 @@ export default async function handler(req) {
       imageUrl = flowerArray[currentIndex] || flowerArray[0];  // Fallback to the first image
       console.log(`Displaying image at index ${currentIndex}: ${imageUrl}`);
 
+      // Encode the image URL properly to avoid any issues
+      const encodedImageUrl = encodeURIComponent(imageUrl);
+      
       // Share URL
       const shareText = encodeURIComponent("Check out this beautiful flower image!");
       const shareLink = `https://warpcast.com/~/compose?text=${shareText}`;
@@ -74,7 +77,7 @@ export default async function handler(req) {
           <head>
             <title>Flower Image</title>
             <meta property="fc:frame" content="vNext" />
-            <meta property="fc:frame:image" content="${imageUrl}" />
+            <meta property="fc:frame:image" content="${encodedImageUrl}" />
             <meta property="fc:frame:button:1" content="Next" />
             <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage?index=${currentIndex}&direction=next" />
             <meta property="fc:frame:button:1:method" content="POST" />
