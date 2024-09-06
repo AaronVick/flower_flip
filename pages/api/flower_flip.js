@@ -42,7 +42,8 @@ export default async function handler(req) {
         throw new Error('No images found in flower array');
       }
 
-      // Adjust the index based on the direction
+      // Ensure that an image is selected
+      let imageUrl = flowerArray[0]; // Default to the first image
       if (direction === 'next') {
         currentIndex = (currentIndex + 1) % flowerArray.length;  // Cycle forward
       } else if (direction === 'previous') {
@@ -50,7 +51,7 @@ export default async function handler(req) {
       }
 
       // Get the image URL for the current index
-      const imageUrl = flowerArray[currentIndex];
+      imageUrl = flowerArray[currentIndex] || flowerArray[0];  // Fallback to the first image
       console.log(`Displaying image at index ${currentIndex}: ${imageUrl}`);
 
       // Share URL
