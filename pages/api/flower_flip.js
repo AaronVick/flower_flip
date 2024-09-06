@@ -38,6 +38,9 @@ export default async function handler(req) {
   const { searchParams } = new URL(req.url);
   const page = searchParams.get('page') || 1;
 
+  // Base URL dynamically created from request headers
+  const baseUrl = `https://${req.headers.host}`;
+
   if (req.method === 'POST') {
     try {
       const images = await fetchFlowerImages(page);
@@ -46,7 +49,7 @@ export default async function handler(req) {
         const imageUrl = images[0].webformatURL;  // Get first image
 
         // Share URL
-        const shareText = encodeURIComponent("Check out some beautiful flower images!");
+        const shareText = encodeURIComponent("Check out this beautiful flower image!");
         const shareLink = `https://warpcast.com/~/compose?text=${shareText}`;
 
         return new Response(
@@ -58,9 +61,9 @@ export default async function handler(req) {
               <meta property="fc:frame" content="vNext" />
               <meta property="fc:frame:image" content="${imageUrl}" />
               <meta property="fc:frame:button:1" content="Next" />
-              <meta property="fc:frame:post_url" content="/api/flowerImage?page=${parseInt(page) + 1}" />
+              <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage?page=${parseInt(page) + 1}" />
               <meta property="fc:frame:button:2" content="Previous" />
-              <meta property="fc:frame:post_url:2" content="/api/flowerImage?page=${Math.max(1, parseInt(page) - 1)}" />
+              <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flowerImage?page=${Math.max(1, parseInt(page) - 1)}" />
             </head>
             <body>
               <h1>Flower Image</h1>
@@ -93,7 +96,7 @@ export default async function handler(req) {
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:image" content="${errorImageUrl}" />
             <meta property="fc:frame:button:1" content="Try Again" />
-            <meta property="fc:frame:post_url" content="/api/flowerImage" />
+            <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage" />
           </head>
           <body>
             <h1>Error</h1>
