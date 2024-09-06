@@ -38,15 +38,18 @@ export default async function handler(req) {
   const { searchParams } = new URL(req.url);
   const page = searchParams.get('page') || 1;
 
-  // Base URL dynamically created from request headers
-  const baseUrl = `https://${req.headers.host}`;
+  // Use the environment variable for the base URL or fallback to req.headers.host
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.host}`;
+  console.log(`Base URL resolved to: ${baseUrl}`);
 
   if (req.method === 'POST') {
     try {
       const images = await fetchFlowerImages(page);
 
       if (images && images.length > 0) {
-        const imageUrl = images[0].webformatURL;  // Get the first image of the current page
+        // Pick a random image from the page set
+        const randomIndex = Math.floor(Math.random() * images.length);
+        const imageUrl = images[randomIndex].webformatURL;  // Random image
 
         // Share URL
         const shareText = encodeURIComponent("Check out this beautiful flower image!");
@@ -62,8 +65,10 @@ export default async function handler(req) {
               <meta property="fc:frame:image" content="${imageUrl}" />
               <meta property="fc:frame:button:1" content="Next" />
               <meta property="fc:frame:post_url" content="${baseUrl}/api/flower_flip?page=${parseInt(page) + 1}" />
+              <meta property="fc:frame:button:1:method" content="POST" />
               <meta property="fc:frame:button:2" content="Previous" />
               <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flower_flip?page=${Math.max(1, parseInt(page) - 1)}" />
+              <meta property="fc:frame:button:2:method" content="POST" />
             </head>
             <body>
               <h1>Flower Image</h1>
