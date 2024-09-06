@@ -1,29 +1,15 @@
-import axios from 'axios';
-
 export const config = {
   runtime: 'edge',
 };
 
-const PIXABAY_API = `https://pixabay.com/api/?key=${process.env.API_KEY}&q=flowers&image_type=photo`;
-const OG_IMAGE_API = `https://flower-flip.vercel.app/api/generateImage`;
-
-async function fetchFlowerImages() {
-  try {
-    // Fetch a large set of images (e.g., 50) to randomize from
-    console.log(`Fetching random set of images`);
-    const response = await axios.get(`${PIXABAY_API}&per_page=50`);
-    if (response.status === 200) {
-      return response.data.hits; // Returns array of image objects
-    } else {
-      throw new Error('Failed to fetch images');
-    }
-  } catch (error) {
-    console.error('Error fetching images:', error);
-    return null;
-  }
+async function fetchFlowerArray() {
+  // Fetch the flower array from the environment variable (assumed to be a comma-separated list of URLs)
+  const flowerArray = process.env.flower_array ? process.env.flower_array.split(',') : [];
+  return flowerArray;
 }
 
 async function generateErrorImage(text) {
+  const OG_IMAGE_API = `https://flower-flip.vercel.app/api/generateImage`;
   console.log(`Generating error image with text: ${text}`);
   const ogImageUrl = `${OG_IMAGE_API}?` + new URLSearchParams({
     text: text
@@ -37,55 +23,66 @@ async function generateErrorImage(text) {
 }
 
 export default async function handler(req) {
-  // Use the environment variable for the base URL
+  // Base URL dynamically created from request headers or environment variable
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `https://${req.headers.host}`;
   console.log(`Base URL resolved to: ${baseUrl}`);
 
   if (req.method === 'POST') {
     try {
-      // Fetch images and pick a random one
-      const images = await fetchFlowerImages();
+      // Get the current index from the request body or default to 0
+      const { searchParams } = new URL(req.url);
+      let currentIndex = parseInt(searchParams.get('index')) || 0;
+      const direction = searchParams.get('direction') || 'next'; // next or previous
 
-      if (images && images.length > 0) {
-        const randomIndex = Math.floor(Math.random() * images.length);
-        const imageUrl = images[randomIndex].webformatURL;  // Pick a random image
-        console.log(`Random image URL: ${imageUrl}`);
-
-        // Share URL
-        const shareText = encodeURIComponent("Check out this beautiful flower image!");
-        const shareLink = `https://warpcast.com/~/compose?text=${shareText}`;
-
-        return new Response(
-          `
-          <!DOCTYPE html>
-          <html>
-            <head>
-              <title>Flower Image</title>
-              <meta property="fc:frame" content="vNext" />
-              <meta property="fc:frame:image" content="${imageUrl}" />
-              <meta property="fc:frame:button:1" content="Next" />
-              <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage" />
-              <meta property="fc:frame:button:1:method" content="POST" />
-              <meta property="fc:frame:button:2" content="Previous" />
-              <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flowerImage" />
-              <meta property="fc:frame:button:2:method" content="POST" />
-            </head>
-            <body>
-              <h1>Flower Image</h1>
-              <img src="${imageUrl}" alt="Flower Image" />
-            </body>
-          </html>
-        `,
-          {
-            status: 200,
-            headers: {
-              'Content-Type': 'text/html',
-            },
-          }
-        );
-      } else {
-        throw new Error('No images found');
+      // Fetch the array of flower images
+      const flowerArray = await fetchFlowerArray();
+      if (flowerArray.length === 0) {
+        throw new Error('No images found in flower array');
       }
+
+      // Adjust the index based on the direction
+      if (direction === 'next') {
+        currentIndex = (currentIndex + 1) % flowerArray.length;  // Cycle forward
+      } else if (direction === 'previous') {
+        currentIndex = (currentIndex - 1 + flowerArray.length) % flowerArray.length;  // Cycle backward
+      }
+
+      // Get the image URL for the current index
+      const imageUrl = flowerArray[currentIndex];
+      console.log(`Displaying image at index ${currentIndex}: ${imageUrl}`);
+
+      // Share URL
+      const shareText = encodeURIComponent("Check out this beautiful flower image!");
+      const shareLink = `https://warpcast.com/~/compose?text=${shareText}`;
+
+      return new Response(
+        `
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Flower Image</title>
+            <meta property="fc:frame" content="vNext" />
+            <meta property="fc:frame:image" content="${imageUrl}" />
+            <meta property="fc:frame:button:1" content="Next" />
+            <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage?index=${currentIndex}&direction=next" />
+            <meta property="fc:frame:button:1:method" content="POST" />
+            <meta property="fc:frame:button:2" content="Previous" />
+            <meta property="fc:frame:post_url:2" content="${baseUrl}/api/flowerImage?index=${currentIndex}&direction=previous" />
+            <meta property="fc:frame:button:2:method" content="POST" />
+          </head>
+          <body>
+            <h1>Flower Image</h1>
+            <img src="${imageUrl}" alt="Flower Image" />
+          </body>
+        </html>
+      `,
+        {
+          status: 200,
+          headers: {
+            'Content-Type': 'text/html',
+          },
+        }
+      );
     } catch (error) {
       console.error('Error in flowerImage handler:', error);
 
@@ -102,7 +99,7 @@ export default async function handler(req) {
             <meta property="fc:frame" content="vNext" />
             <meta property="fc:frame:image" content="${errorImageUrl}" />
             <meta property="fc:frame:button:1" content="Try Again" />
-            <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage" />
+            <meta property="fc:frame:post_url" content="${baseUrl}/api/flowerImage?index=0&direction=next" />
             <meta property="fc:frame:button:1:method" content="POST" />
           </head>
           <body>
