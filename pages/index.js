@@ -14,7 +14,7 @@ export default function Home({ baseUrl }) {
   return (
     <>
       <Head>
-        <title>Dad Jokes All Day</title>
+        <title>Flowers Galore</title>
         <meta property="fc:frame" content="vNext" />
         <meta property="fc:frame:image" content={`${baseUrl}/flower_flip_img.png`} />
         <meta property="fc:frame:button:1" content="Flowers Galore" />

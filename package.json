@@ -1,7 +1,7 @@
 {
-  "name": "funfacts",
+  "name": "Flowers Galore",
   "version": "1.0.0",
-  "description": "Fun Facts",
+  "description": "Flowers Galore",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
